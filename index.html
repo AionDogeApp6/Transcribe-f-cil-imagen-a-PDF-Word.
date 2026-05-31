@@ -327,7 +327,233 @@
 
     </div>
 
-    <!-- El bloque de funciones JavaScript irá enlazado justo debajo en el siguiente paso -->
+    <script>
+    // --- 1. MATRIZ DE DATOS (COHERENCIA DE SELECTORES) ---
+    const sectoresVenezuela = [
+        { value: 'guaro', text: 'Lara (Habla Guaro - Naguará, Vasié)' },
+        { value: 'maracucho', text: 'Zulia (Maracucho - Voseo, ¡Qué molleja!)' },
+        { value: 'gocho', text: 'Los Andes (Gocho - Uso de Usted, Toche)' },
+        { value: 'oriental', text: 'Oriente (Compai, Mijo, Hablar rápido)' },
+        { value: 'caraqueno', text: 'Caracas (Caraqueño - Chamo, Pana, Fino)' },
+        { value: 'falconeano', text: 'Falcón (Falconeano - Primo, ¡A mundo!)' },
+        { value: 'barines', text: 'Barinas / El Llano (Llanero - Caracha, Camarita)' },
+        { value: 'campos', text: 'De los Campos (Español rural tradicional)' },
+        { value: 'guajira', text: 'Comunidad Guajira (Influencia Wayuunaiki)' },
+        { value: 'waraos', text: 'Comunidad Warao (Influencias lingüísticas)' }
+    ];
+
+    const gremiosTecnicos = [
+        { value: 'judicial', text: 'Judicial / Legal (Jurisprudencia, Autos, Gacetas)' },
+        { value: 'legislativo', text: 'Legislativo (Estructura de Leyes)' },
+        { value: 'medico', text: 'Médico (Nomenclatura clínica y patologías)' },
+        { value: 'ingenieria', text: 'Ingeniería / Procesos (Métricas exactas)' },
+        { value: 'docente', text: 'Docente / Pedagógico (Planificación curricular)' },
+        { value: 'policial', text: 'Policial / Criminalística (Actas y Minutas)' },
+        { value: 'empresarial', text: 'Empresarial / Corporativo (Management)' },
+        { value: 'quimico', text: 'Químico (Fórmulas y Enlaces)' },
+        { value: 'matematico', text: 'Matemático (Algoritmos cuantitativos)' }
+    ];
+
+    // Carga inicial por defecto del menú de Sectores Venezolanos
+    const selectorPerfil = document.getElementById('perfil-activo');
+    sectoresVenezuela.forEach(opt => selectorPerfil.add(new Option(opt.text, opt.value)));
+
+    // Alternar menús dinámicamente según la pestaña activa
+    function alternarMenues(tipo) {
+        const tabVenezuela = document.getElementById('tab-venezuela');
+        const tabGremio = document.getElementById('tab-gremio');
+        
+        selectorPerfil.innerHTML = ''; // Vaciar opciones
+
+        if (tipo === 'venezuela') {
+            tabVenezuela.classList.add('activo');
+            tabGremio.classList.remove('activo');
+            sectoresVenezuela.forEach(opt => selectorPerfil.add(new Option(opt.text, opt.value)));
+        } else {
+            tabGremio.classList.add('activo');
+            tabVenezuela.classList.remove('activo');
+            gremiosTecnicos.forEach(opt => selectorPerfil.add(new Option(opt.text, opt.value)));
+        }
+        ejecutarRemapeoAdaptativo();
+    }
+
+    // --- 2. MOTOR OCR (PROCESAMIENTO VISUAL DE LA FOTO) ---
+    const inputUpload = document.getElementById('upload-real');
+    const salidaEditable = document.getElementById('salida-editable');
+    const contenedorInputs = document.getElementById('contenedor-inputs');
+
+    inputUpload.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            const archivo = this.files[0];
+            salidaEditable.value = "⏳ Analizando pixeles de la imagen con el motor OCR...\nPor favor, mantén la aplicación abierta.";
+            
+            // Tesseract procesa localmente en el procesador del móvil
+            Tesseract.recognize(archivo, 'spa+eng').then(({ data: { text } }) => {
+                if (!text.trim()) {
+                    salidaEditable.value = "⚠️ No se encontró texto legible en la captura. Intenta tomar la foto con mejor iluminación.";
+                    return;
+                }
+                
+                // Mapear el texto original extraído en los formularios del panel izquierdo
+                construirFormularioDinamico(text);
+                // Ejecutar adaptación inmediata del texto extraído
+                procesarAdaptacionLinguistica(text);
+            }).catch(err => {
+                console.error(err);
+                salidaEditable.value = "❌ Error crítico en el módulo de lectura de imagen.";
+            });
+        }
+    });
+
+    // Convierte las líneas leídas en campos de formulario editables
+    function construirFormularioDinamico(textoCompleto) {
+        contenedorInputs.innerHTML = ''; // Limpiar indicador de carga
+        const lineas = textoCompleto.split('\n').filter(l => l.trim() !== '');
+        
+        lineas.forEach((linea, index) => {
+            const campo = document.createElement('div');
+            campo.classList.add('campo-fijo');
+            campo.innerHTML = `
+                <label>Línea ${index + 1} Detectada:</label>
+                <input type="text" value="${linea}" class="input-linea-ocr" oninput="ejecutarRemapeoAdaptativo()">
+            `;
+            contenedorInputs.appendChild(campo);
+        });
+    }
+
+    function ejecutarRemapeoAdaptativo() {
+        const inputs = document.querySelectorAll('.input-linea-ocr');
+        let textoAcumulado = "";
+        inputs.forEach(i => textoAcumulado += i.value + "\n");
+        if(textoAcumulado.trim()) {
+            procesarAdaptacionLinguistica(textoAcumulado);
+        }
+    }
+
+    // --- 3. MOTOR LOCAL DE ADAPTACIÓN CULTURAL Y GREMIAL ---
+    function procesarAdaptacionLinguistica(textoOriginal) {
+        const perfil = selectorPerfil.value;
+        let textoLimpio = textoOriginal.trim();
+
+        // Prefijos e inyecciones de jergas basados en tus requerimientos exactos
+        const moldesJergas = {
+            guaro: `¡Naguará, mi compai! Vasié, mirá lo que nos llegó en este documento:\n\n"${textoLimpio}"\n\n¡Siaxo, eso está listo para la descarga, chaimita!`,
+            maracucho: `¡Qué molleja, primo! Mirá vos el verguero de texto que extrajo la cámara, vos sabéis:\n\n"${textoLimpio}"\n\n¡Vergación, quedó fino! Mandá a bajar ese PDF de una vez, hermano.`,
+            gocho: `Muy buenas tardes a usted, pingo. Con el debido respeto mutuo entre caballeros, procedo a presentarle la transcripción formal de la línea:\n\n"${textoLimpio}"\n\n¿Qué más necesita que le colabore, toche? Quedo atento.`,
+            oriental: `¡Erga compai! Mire elbeta que trajo ese papel, mijo, escuche lo que dice, mi llave:\n\n"${textoLimpio}"\n\nEso quedó calidá y bien rápido, como hablamos nosotros.`,
+            caraqueno: `¡Háblame, pana! Mira el beta serio de este texto que capturó la cámara, chamo, está fino:\n\n"${textoLimpio}"\n\nDescarga tu documento de una, está bien criminal. Brutal.`,
+            falconeano: `¡A mundo, primo! Mire este documento que logramos escanear desde la costa de Falcón:\n\n"${textoLimpio}"\n\nYa lo tenemos listo y acomodado para que lo compartas por las redes.`,
+            barines: `¡Caracha, camarita! Suene ese arpa llanera que aquí va la copla y el texto de la faena debidamente indexado:\n\n"${textoLimpio}"\n\nListo para el despacho legal o el resguardo, pariente.`,
+            campos: `Buenas los tengan. Con el permiso del caporal, aquí está el apunte claro del papel del campo:\n\n"${textoLimpio}"\n\nAsentado correctamente para evitar pérdidas de cuentas.`,
+            guajira: `Anas wanki. En el territorio ancestral y con el debido respeto a las leyes de la comunidad, indexamos el registro:\n\n"${textoLimpio}"\n\nSalvaguardando la palabra expuesta en el acta digital.`,
+            waraos: `Yakera. Conectados con los caños y la sabiduría del delta, se establece el flujo del mensaje digitalizado:\n\n"${textoLimpio}"\n\nTranscrito de forma íntegra para su difusión por redes sociales.`,
+            // Registros Técnicos Profesionales
+            judicial: `DE CONFORMIDAD CON LOS AUTOS VISTOS Y LAS ATRIBUCIONES LEGALES CONFERIDAS, SE TRANSCRIBE AD VERBUM EL TEXTO PROCESADO:\n\n"${textoLimpio.toUpperCase()}"\n\nCÚMPLASE Y REGÍSTRESE DE CONFORMIDAD CON LA LEY.`,
+            legislativo: `CONSIDERANDO QUE EL DOCUMENTO PROPORCIONADO CONTIENE LOS ELEMENTOS DE EXTRACCIÓN NORMATIVOS, LA ASAMBLEA ACUERDA EXPEDIR EL SIGUIENTE TEXTO:\n\n"${textoLimpio}"\n\nDADO Y FIRMADO EN LA SALA DE SESIONES.`,
+            medico: `SINTOMATOLOGÍA EVOLUTIVA Y EVALUACIÓN CLÍNICA DE DATOS EXAMINADOS VÍA OCR:\n\n"${textoLimpio}"\n\nDIAGNÓSTICO PRELIMINAR: Transcripción anatómica estable. Proceder a la descarga del reporte clínico.`,
+            ingenieria: `MÓDULO DE OPTIMIZACIÓN Y ANÁLISIS DE SISTEMAS INTEGRADOS. PARÁMETROS INDEXADOS:\n\n"${textoLimpio}"\n\nEFICIENCIA GLOBAL: 100%. Estructura vectorial del documento validada.`,
+            docente: `PLANIFICACIÓN PEDAGÓGICA Y EVALUACIÓN POR COMPETENCIAS. CONTENIDO DIDÁCTICO LOGRADO:\n\n"${textoLimpio}"\n\nESTRATEGIA RECOMENDADA: Lectura comprensiva grupal y almacenamiento en portafolio educativo.`,
+            policial: `REPÚBLICA BOLIVARIANA DE VENEZUELA. ACTA DE MINUTA POLICIAL Y APREHENSIÓN INFORMATIVA:\n\n"${textoLimpio.toUpperCase()}"\n\nFASE: Fijación fotográfica y resguardo documental en base de datos de seguridad ciudadana.`,
+            empresarial: `REPORTE EJECUTIVO DE MANAGEMENT Y OPTIMIZACIÓN FINANCIERA CORPORATIVA:\n\n"${textoLimpio}"\n\nACCIONAMIENTO ESTRATÉGICO: Descargar entregable para presentación en junta directiva de la empresa.`,
+            quimico: `ANÁLISIS DE COMPUESTOS, REACCIONES Y SOLUCIONES DE LABORATORIO ESTABLECIDAS:\n\n"${textoLimpio}"\n\nESTADO: Enlaces moleculares estables. Nomenclatura pura verificada correctamente.`,
+            matematico: `LOGARITMO DE CONTROL Y PROCESAMIENTO MATEMÁTICO CUANTITATIVO DE VARIABLES:\n\n"${textoLimpio}"\n\nMÉTRICA: Ecuación textual resuelta sin margen de error vectorial.`
+        };
+
+        salidaEditable.value = moldesJergas[perfil] || textoLimpio;
+    }
+
+    // Escuchar cambios de selección en el menú desplegable para re-adaptar el texto de inmediato
+    selectorPerfil.addEventListener('change', ejecutarRemapeoAdaptativo);
+
+    // Cambiar dinámicamente la tipografía del área de texto
+    const selectorFuente = document.getElementById('fuente-documento');
+    selectorFuente.addEventListener('change', function() {
+        salidaEditable.style.fontFamily = this.value;
+    });
+
+    // --- 4. FUNCIONALIDAD DEL BOTÓN DE ALTA VOZ 🔘 ---
+    document.getElementById('btn-audio').addEventListener('click', function() {
+        const textoALeer = salidaEditable.value;
+        if (!textoALeer.trim()) return alert("No hay texto disponible para reproducir en voz alta.");
+
+        window.speechSynthesis.cancel(); // Detener lecturas colgadas previas
+        let locucion = new SpeechSynthesisUtterance(textoALeer);
+        locucion.lang = 'es-VE'; // Configurar síntesis de voz en Español de Venezuela
+        locucion.rate = 0.95;    // Velocidad ligeramente pausada para óptima comprensión en móviles
+        window.speechSynthesis.speak(locucion);
+    });
+
+    // --- 5. 📄 DESCARGA PDF REAL CON CONSERVACIÓN DE FUENTE ---
+    document.getElementById('btn-pdf').addEventListener('click', function() {
+        const texto = salidaEditable.value;
+        const fuenteElegida = selectorFuente.value;
+        
+        if (!texto.trim()) return alert("El área de texto está vacía. Procesa una imagen primero.");
+
+        // Contenedor flotante temporal para que html2pdf lo renderice de forma impecable y limpia
+        const elementoImprenta = document.createElement('div');
+        elementoImprenta.style.padding = '35px';
+        elementoImprenta.style.color = '#000000'; // Letras negras formales
+        elementoImprenta.style.backgroundColor = '#ffffff'; // Fondo blanco puro para impresión
+        elementoImprenta.style.fontFamily = fuenteElegida;
+        elementoImprenta.style.fontSize = '12pt';
+        elementoImprenta.style.lineHeight = '1.6';
+        elementoImprenta.style.whiteSpace = 'pre-wrap';
+        elementoImprenta.innerText = texto;
+
+        const opcionesConfig = {
+            margin: 15,
+            filename: 'documento_adaptado_renderizado.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, logging: false },
+            jsPDF: { unit: 'mm', format: 'letter', orientation: 'portrait' }
+        };
+
+        // Descarga directa ejecutable
+        html2pdf().from(elementoImprenta).set(opcionesConfig).save();
+    });
+
+    // --- 6. 📝 DESCARGA DE WORD NATIVA (.DOC) CON TIPOGRAFÍA ---
+    document.getElementById('btn-word').addEventListener('click', function() {
+        const texto = salidaEditable.value;
+        const fuenteElegida = selectorFuente.value;
+        
+        if (!texto.trim()) return alert("No hay información redactada para exportar a Microsoft Word.");
+
+        // Construcción de estructura HTML compatible con Office Word para respetar la tipografía seleccionada
+        const plantillaWord = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>Documento Exportado</title>
+        <style>
+            body { font-family: ${fuenteElegida}, sans-serif; font-size: 12pt; line-height: 1.6; color: #000000; }
+        </style>
+        </head>
+        <body>
+            ${texto.replace(/\n/g, '<br>')}
+        </body>
+        </html>`;
+
+        // Crear el Blob binario del tipo application/msword
+        const blobBinario = new Blob(['\ufeff' + plantillaWord], { type: 'application/msword' });
+        const enlaceDescarga = document.createElement('a');
+        
+        enlaceDescarga.href = URL.createObjectURL(blobBinario);
+        enlaceDescarga.download = 'documento_adaptado_renderizado.doc';
+        
+        document.body.appendChild(enlaceDescarga);
+        enlaceDescarga.click();
+        document.body.removeChild(enlaceDescarga); // Limpieza de memoria
+    });
+
+    // --- 7. 💬 COMPARTIR EN WHATSAPP CON CODIFICACIÓN SEGURA ---
+    document.getElementById('btn-share').addEventListener('click', function() {
+        const textoACompartir = salidaEditable.value;
+        if (!textoACompartir.trim()) return alert("No hay texto para compartir en tus canales.");
+        
+        const enlaceWhatsApp = `https://api.whatsapp.com/send?text=${encodeURIComponent(textoACompartir)}`;
+        window.open(enlaceWhatsApp, '_blank');
+    });
+</script>
 </body>
   </html>
 
