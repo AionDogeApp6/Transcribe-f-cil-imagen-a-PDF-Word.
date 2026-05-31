@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Traducción y Adaptación Avanzada</title>
+    <!-- Iconos del Sistema -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- INCLUSIÓN DE LIBRERÍAS EXTERNAS VÍA CDN -->
+    <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* --- PALETA DE COLORES MODO OSCURO PREMIUM --- */
+        :root {
+            --bg-fondo: #121214;
+            --bg-card: #1a1a1e;
+            --bg-input: #26262b;
+            --texto-claro: #ffffff;
+            --texto-mutado: #a1a1aa;
+            --naranja-acento: #e07a5f;
+            --marron-premium: #3d261c;
+            --borde-bnd: #333338;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-fondo);
+            color: var(--texto-claro);
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .contenedor-global {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        header {
+            text-align: center;
+            padding: 5px 0 10px 0;
+            border-bottom: 1px solid var(--borde-bnd);
+        }
+
+        header h1 { font-size: 1.6rem; font-weight: 700; }
+        header p { color: var(--texto-mutado); font-size: 0.85rem; }
+
+        /* --- ZONA DE INGESTA (CÁMARA / ARCHIVOS) --- */
+        .zona-drop {
+            background-color: var(--bg-card);
+            border: 2px dashed var(--borde-bnd);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        .zona-drop:hover { border-color: var(--naranja-acento); }
+        .icon-camara { font-size: 40px; color: var(--naranja-acento); margin-bottom: 8px; }
+
+        /* Controles integrados del Módulo de Imagen */
+        .ajustes-imagen {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+            background: var(--bg-input);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+        }
+
+        .ajustes-imagen input[type="range"] {
+            accent-color: var(--naranja-acento);
+            width: 70px;
+        }
+
+        /* --- SELECTOR DE REGISTROS (PESTAÑAS) --- */
+        .caja-configuracion {
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            padding: 15px;
+            border: 1px solid var(--borde-bnd);
+        }
+
+        .tabs-registro {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--borde-bnd);
+            padding-bottom: 8px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--texto-mutado);
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .tab-btn.activo {
+            background-color: var(--marron-premium);
+            color: var(--naranja-acento);
+            border: 1px solid var(--naranja-acento);
+        }
+
+        .select-custom select {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--bg-input);
+            color: var(--texto-claro);
+            border: 1px solid var(--borde-bnd);
+            border-radius: 6px;
+            outline: none;
+        }
+
+        /* --- ÁREAS DE TEXTO (DIVISIÓN MULTIPANEL) --- */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) { .workspace { grid-template-columns: 1fr; } }
+
+        .modulo-bloque {
+            background-color: var(--bg-card);
+            border-radius: 10px;
+            border: 1px solid var(--borde-bnd);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header-bloque {
+            background-color: var(--bg-input);
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--texto-mutado);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-bloque select {
+            padding: 3px;
+            background: var(--bg-card);
+            color: white;
+            border: 1px solid var(--borde-bnd);
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        /* Formulario Izquierdo */
+        .inputs-formulario {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            height: 280px;
+            overflow-y: auto;
+        }
+
+        .campo-fijo { display: flex; flex-direction: column; gap: 3px; }
+        .campo-fijo label { font-size: 0.75rem; color: var(--texto-mutado); }
+        .campo-fijo input {
+            padding: 8px; background-color: var(--bg-input);
+            border: 1px solid var(--borde-bnd); border-radius: 5px; color: white; outline: none;
+            font-size: 0.85rem;
+        }
+
+        /* Editor de texto Derecho */
+        .area-redaccion {
+            width: 100%;
+            height: 280px;
+            padding: 12px;
+            background: transparent;
+            color: var(--texto-claro);
+            border: none;
+            resize: none;
+            outline: none;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        /* --- BOTONERA DE CONTROL INFERIOR --- */
+        .controles-operativa {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-card);
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--borde-bnd);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .grupo-salidas { display: flex; gap: 8px; flex-wrap: wrap; }
+
+        .btn-core {
+            display: flex; align-items: center; gap: 6px;
+            padding: 10px 15px; border-radius: 6px;
+            font-weight: 600; font-size: 0.85rem; cursor: pointer; border: none;
+        }
+
+        .btn-altavoz-activo { background-color: var(--marron-premium); color: var(--naranja-acento); border: 1px solid var(--naranja-acento); }
+        .btn-file-out { background-color: var(--bg-input); color: var(--texto-claro); border: 1px solid var(--borde-bnd); }
+        .btn-wapi { background-color: #25d366; color: white; }
+
+        #upload-real { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor-global">
+        
+        <header>
+            <h1>Traductor Adaptativo Omnicanal</h1>
+            <p>Estructura optimizada de bajo consumo para procesamiento móvil</p>
+        </header>
+
+        <!-- SUBIDA DE ARCHIVO / FOTO -->
+        <div class="zona-drop" onclick="document.getElementById('upload-real').click()">
+            <input type="file" id="upload-real" accept="image/*, .pdf, .docx">
+            <span class="material-icons-round icon-camara">add_a_photo</span>
+            <h3>Capturar Foto o Cargar Documento</h3>
+            <p style="color: var(--texto-mutado); font-size: 0.75rem; margin-top:3px;">Soporta captura directa de cámara, Word o archivos PDF</p>
+            
+            <!-- Herramientas Completas de Ajuste de Imagen -->
+            <div class="ajustes-imagen" onclick="event.stopPropagation();">
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span>Contraste:</span>
+                    <input type="range" id="ctrl-contraste" min="50" max="200" value="100">
+                </div>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span>Rotación:</span>
+                    <input type="range" id="ctrl-rotacion" min="-90" max="90" value="0">
+                </div>
+            </div>
+        </div>
+
+        <!-- CONFIGURACIÓN DE LOS REGISTROS DE IDIOMA/JERGA -->
+        <div class="caja-configuracion">
+            <div class="tabs-registro">
+                <button class="tab-btn activo" id="tab-venezuela" onclick="alternarMenues('venezuela')">👥 Sectores Venezolanos</button>
+                <button class="tab-btn" id="tab-gremio" onclick="alternarMenues('gremio')">💼 Lenguaje Técnico Profesiones</button>
+            </div>
+            <div class="select-custom">
+                <select id="perfil-activo">
+                    <!-- Cargados dinámicamente en la parte 2 -->
+                </select>
+            </div>
+        </div>
+
+        <!-- PANTALLAS COMPARTIDAS DE EDICIÓN -->
+        <div class="workspace">
+            
+            <!-- FORMULARIO IZQUIERDO -->
+            <div class="modulo-bloque">
+                <div class="header-bloque">LECTURA ORIGINAL Y FORMULARIOS DETECTADOS</div>
+                <div class="inputs-formulario" id="contenedor-inputs">
+                    <div class="campo-fijo">
+                        <label>Estado del sistema:</label>
+                        <input type="text" value="Esperando ingreso de imagen o documento para mapear campos..." readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL DE DISEÑO Y REDACCIÓN DERECHO -->
+            <div class="modulo-bloque">
+                <div class="header-bloque">
+                    <span>TEXTO ADAPTADO EDITABLE</span>
+                    <!-- Selector de Fuentes Tipográficas -->
+                    <select id="fuente-documento">
+                        <option value="Arial">Arial (Estándar)</option>
+                        <option value="Times New Roman">Times New Roman (Judicial)</option>
+                        <option value="Calibri">Calibri (Empresarial)</option>
+                        <option value="Courier New">Courier New (Minutas)</option>
+                    </select>
+                </div>
+                <textarea class="area-redaccion" id="salida-editable" placeholder="El resultado de la conversión aparecerá aquí listo para su edición manual..."></textarea>
+            </div>
+
+        </div>
+
+        <!-- PIE DE ACCIONES ACCESIBLES -->
+        <div class="controles-operativa">
+            <button class="btn-core btn-altavoz-activo" id="btn-audio">
+                <span class="material-icons-round">volume_up</span>
+                <span>Alta Voz 🔘</span>
+            </button>
+            
+            <div class="grupo-salidas">
+                <button class="btn-core btn-file-out" id="btn-pdf">
+                    <span class="material-icons-round">picture_as_pdf</span>
+                    <span>Guardar PDF</span>
+                </button>
+                <button class="btn-core btn-file-out" id="btn-word">
+                    <span class="material-icons-round">description</span>
+                    <span>Guardar Word</span>
+                </button>
+                <button class="btn-core btn-wapi" id="btn-share">
+                    <span class="material-icons-round">share</span>
+                    <span>Compartir</span>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- El bloque de funciones JavaScript irá enlazado justo debajo en el siguiente paso -->
+</body>
+  </html>
+
